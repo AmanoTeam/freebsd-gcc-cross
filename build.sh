@@ -56,8 +56,8 @@ declare -ra plugin_libraries=(
 )
 
 declare -ra targets=(
-	'x86_64-unknown-freebsd15.0'
-	'aarch64-unknown-freebsd15.0'
+	'x86_64-unknown-freebsd15.1'
+	'aarch64-unknown-freebsd15.1'
 	'i386-unknown-freebsd14.4'
 )
 
@@ -568,6 +568,10 @@ for triplet in "${targets[@]}"; do
 	# Required due to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78251
 	mv "${toolchain_directory}/${triplet}/include/unwind.h" "${toolchain_directory}/${triplet}/include/unwind.h.bak"
 	
+	if (( is_native )); then
+		unlink "${toolchain_directory}/${triplet}/include/sys/auxv.h"
+	fi
+	
 	[ -d "${gcc_directory}/build" ] || mkdir "${gcc_directory}/build"
 	
 	cd "${gcc_directory}/build"
@@ -604,14 +608,13 @@ for triplet in "${targets[@]}"; do
 		--enable-linker-build-id \
 		--enable-lto \
 		--enable-plugin \
-		--enable-libsanitizer \
 		--enable-shared \
 		--enable-threads='posix' \
 		--enable-libstdcxx-threads \
-		--enable-libssp \
 		--enable-standard-branch-protection \
 		--enable-host-pie \
 		--enable-host-shared \
+		--enable-initfini-array \
 		--enable-libgomp \
 		--enable-tls \
 		--enable-libstdcxx-verbose \
@@ -623,6 +626,7 @@ for triplet in "${targets[@]}"; do
 		--with-gnu-ld \
 		--disable-gnu-unique-object \
 		--disable-libssp \
+		--disable-libsanitizer \
 		--disable-fixincludes \
 		--disable-libstdcxx-pch \
 		--disable-werror \
@@ -653,7 +657,7 @@ for triplet in "${targets[@]}"; do
 	rm "${toolchain_directory}/bin/${triplet}-${triplet}-"* || true
 	
 	for source in "${toolchain_directory}/bin/${triplet}-"*; do
-		destination="${source/15.0/}"
+		destination="${source/15.1/}"
 		destination="${destination/14.4/}"
 		
 		ln --symbolic --relative "${source}" "${destination}"
@@ -741,22 +745,6 @@ if ! (( is_native )) && [[ "${CROSS_COMPILE_TRIPLET}" != *'-darwin'* ]]; then
 	declare soname=$("${readelf}" -d "${name}" | grep 'SONAME' | sed --regexp-extended 's/.+\[(.+)\]/\1/g')
 	
 	cp "${name}" "${toolchain_directory}/lib/${soname}"
-	
-	# libiconv
-	declare name=$(realpath $("${cc}" --print-file-name='libiconv.so'))
-	
-	if [ -f "${name}" ]; then
-		declare soname=$("${readelf}" -d "${name}" | grep 'SONAME' | sed --regexp-extended 's/.+\[(.+)\]/\1/g')
-		cp "${name}" "${toolchain_directory}/lib/${soname}"
-	fi
-	
-	# libcharset
-	declare name=$(realpath $("${cc}" --print-file-name='libcharset.so'))
-	
-	if [ -f "${name}" ]; then
-		declare soname=$("${readelf}" -d "${name}" | grep 'SONAME' | sed --regexp-extended 's/.+\[(.+)\]/\1/g')
-		cp "${name}" "${toolchain_directory}/lib/${soname}"
-	fi
 fi
 
 mkdir --parent "${share_directory}"

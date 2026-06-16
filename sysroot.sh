@@ -19,7 +19,7 @@ declare -r targets=(
 )
 
 for target in "${targets[@]}"; do
-	declare version='15.0-RELEASE'
+	declare version='15.1-RELEASE'
 	
 	if [ "${target}" = 'i386' ] || [ "${target}" = 'powerpc/powerpc' ]; then
 		version='14.4-RELEASE'
@@ -30,17 +30,17 @@ for target in "${targets[@]}"; do
 	
 	case "${target}" in
 		amd64)
-			declare triplet='x86_64-unknown-freebsd15.0';;
+			declare triplet='x86_64-unknown-freebsd15.1';;
 		arm64)
-			declare triplet='aarch64-unknown-freebsd15.0';;
+			declare triplet='aarch64-unknown-freebsd15.1';;
 		i386)
 			declare triplet='i386-unknown-freebsd14.4';;
 		powerpc/powerpc)
 			declare triplet='powerpc-unknown-freebsd14.4';;
 		powerpc/powerpc64)
-			declare triplet='powerpc64-unknown-freebsd15.0';;
+			declare triplet='powerpc64-unknown-freebsd15.1';;
 		riscv/riscv64)
-			declare triplet='riscv64-unknown-freebsd15.0';;
+			declare triplet='riscv64-unknown-freebsd15.1';;
 	esac
 	
 	declare sysroot_directory="${workdir}/${triplet}"
